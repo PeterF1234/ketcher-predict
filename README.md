@@ -24,7 +24,7 @@ The saved model weights are stored in the Zenodo repository: [![DOI](https://zen
 Running the application on a local PC is relatively simple and works under both Windows and Linux:
 1) install Docker
 2) clone/download the repository
-3) get the saved model weights from Zenodo
+3) get the saved model weights from [Zenodo](https://doi.org/10.5281/zenodo.22111316)
 4) put `model2_trial_2.pt` and `model6b_trial_8.pt` in the backend folder
 5) use a terminal to navigate to the downloaded folder
 6) use `docker compose build` to build a docker image
@@ -35,6 +35,6 @@ Running the application on a local PC is relatively simple and works under both 
 
 We plan to keep improving the web server by updating Ketcher and adding new molecular properties to predict. We plan to stay at Ketcher version v2, since v3 added a macromolecules feature that the backend is not designed to utilize.
 
-Present
+Present taks:
 - update ketcher on the live server (v2.24.0 to v2.28.0)
 - add HTTPS
