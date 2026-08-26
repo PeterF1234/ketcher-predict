@@ -2,6 +2,8 @@
 
 A modified Ketcher molecular editor with custom ML backend for molecular property prediction. Currently, the backend predicts the singlet-triplet gap (STG).
 
+![Application_snapshot](img/intro_img.png)
+
 ## STG Prediction
 
 The methodology for STG prediction is published in our paper "Prediction of Singlet-Triplet Gaps Using Self-Attention–Based Regression with Model Integration into a Molecular Editor". 
