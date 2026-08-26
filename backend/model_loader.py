@@ -638,5 +638,36 @@ async def serve_index(): # avoid serving an older cached index.html
     return FileResponse("/app/index.html", headers={"Cache-Control": "no-cache"})
 
 app.mount("/static", StaticFiles(directory="/app/static"), name="static")
-
 # app.mount("/", StaticFiles(directory=HTML_PATH, html=True), name="static")
+
+@app.get("/manifest.json")
+async def manifest():
+    return FileResponse("/app/manifest.json")
+
+@app.get("/asset-manifest.json")
+async def manifest():
+    return FileResponse("/app/asset-manifest.json")
+
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse("/app/favicon.ico")
+
+@app.get("/favicon-16x16.png")
+async def favicon():
+    return FileResponse("/app/favicon-16x16.png")
+
+@app.get("/favicon-32x32.png")
+async def favicon():
+    return FileResponse("/app/favicon-32x32.png")
+
+@app.get("/apple-touch-icon.png")
+async def favicon():
+    return FileResponse("/app/apple-touch-icon.png")
+
+@app.get("/indigo-ketcher-1.27.0.wasm")
+async def favicon():
+    return FileResponse("/app/indigo-ketcher-1.27.0.wasm")
+
+@app.get("/indigo-ketcher-norender-1.27.0.wasm")
+async def favicon():
+    return FileResponse("/app/indigo-ketcher-norender-1.27.0.wasm")
