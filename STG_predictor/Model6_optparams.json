@@ -1,0 +1,1 @@
+{"batch_size": 16, "graph_hidden_dim": 192, "num_graph_layers": 5, "graph_activation": "relu", "graph_dropout": 0.24320980488750008, "use_fusion": false, "fusion_dim": 512, "pooling": "mean", "head_activation": "gelu", "head_dim": 512, "lr": 2.2241812494359715e-05, "weight_decay": 1.0034082543345758e-06}

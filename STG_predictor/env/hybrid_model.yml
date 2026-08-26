@@ -1,0 +1,24 @@
+name: hybrid_model
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+  - ipykernel
+  - ipywidgets
+  - rdkit
+  - pandas
+  - numpy
+  - scipy
+  - scikit-learn
+  - xgboost
+  - nomkl
+  - optuna
+  - pip
+  - pip:
+      - torch==2.10.0+cu128
+      - torch-geometric
+      - transformers
+      - tokenizers
+      - --extra-index-url https://download.pytorch.org/whl/cu128
+      - --extra-index-url https://data.pyg.org/whl/torch-2.10.0+cu128.html

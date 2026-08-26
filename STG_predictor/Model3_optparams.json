@@ -1,0 +1,1 @@
+{"dropout": 0.10970755389576518, "batch_size": 16, "embed_dim": 384, "nhead": 4, "num_layers": 3, "lr": 8.275985995761376e-05, "weight_decay": 1.2975158006302118e-06}

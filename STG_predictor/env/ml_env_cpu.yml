@@ -1,0 +1,17 @@
+name: ml_env_cpu
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - ipykernel
+  - ipywidgets
+  - rdkit
+  - py3dmol
+  - tensorflow
+  - pytorch
+  - pytorch_geometric
+  - pandas
+  - transformers
+  - tokenizers
+  - optuna
+  - xgboost

@@ -1,0 +1,1 @@
+{"batch_size": 32, "fp_rad": 2, "in_dim": 2048, "d_model": 128, "droprate": 0.05, "lr": 0.006559869883588499, "weight_decay": 0.001953307275087445}
