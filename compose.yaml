@@ -4,6 +4,7 @@
  
 services:
   server:
+    container_name: ketcher-server
     build:
       context: .
     image: ketcher-predict:latest
@@ -12,6 +13,6 @@ services:
     environment:
       - HF_HOME=/home/appuser/.cache/huggingface # tell Hugging Face where inside the container to put its cache
     volumes:
-      - .:/app
+      - .:/app # for local development, remove for production code ("docker compose up" mounts the pwd into /app in the container, overrides the files that were originally in the docker image)
 #      - ./hf_cache:/home/appuser/.cache/huggingface # if there is cache on local machine use it
 
