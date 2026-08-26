@@ -1,6 +1,6 @@
 # ketcher-predict [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-A modified Ketcher molecular editor with custom ML backend for molecular property prediction. Currently, the backend predicts the singlet-triplet gap (STG).
+A modified Ketcher molecular editor with custom ML backend for molecular property prediction. Currently, the backend predicts the singlet-triplet gap (STG). The web application can be accessed [here](ketcher-predict.ttk.hu).
 
 ![Application_snapshot](img/intro_img.png)
 
