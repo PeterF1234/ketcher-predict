@@ -1,0 +1,150 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#000000"/><meta name="description" content="Ketcher is a web-based chemical structure editor"/><link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico"/><link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png"/><title>Ketcher v2.24.0</title><script defer="defer" src="./static/js/main.67cb654b.js"></script><link href="./static/css/main.e770f74b.css" rel="stylesheet">
+</head>
+
+
+<body>
+<noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div>
+<script>
+    // Wait until Ketcher initializes
+    function waitForKetcher() {
+        return new Promise(resolve => {
+            const check = () => {
+                if (window.ketcher) resolve(window.ketcher);
+                else setTimeout(check, 200);
+            };
+            check();
+        });
+    }
+
+    async function initPredictor() {
+        const ketcher = await waitForKetcher();
+        console.log("Ketcher loaded:", ketcher);
+
+        // Create a container for your UI
+        const ui = document.createElement("div");
+        ui.style.position = "absolute";
+        ui.style.top = "75px";
+        ui.style.right = "60px";
+        ui.style.zIndex = "9999";
+        ui.style.background = "white";
+        ui.style.padding = "10px";
+        ui.style.border = "1px solid #ccc";
+        ui.style.borderRadius = "6px";
+        ui.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+		ui.style.cursor = "move";
+		
+		// Make the UI draggable
+		let offsetX = 0, offsetY = 0, isDown = false;
+
+		ui.addEventListener("mousedown", (e) => {
+			isDown = true;
+			offsetX = ui.offsetLeft - e.clientX;
+			offsetY = ui.offsetTop - e.clientY;
+		});
+
+		document.addEventListener("mouseup", () => {
+			isDown = false;
+		});
+
+		document.addEventListener("mousemove", (e) => {
+			if (!isDown) return;
+			ui.style.left = (e.clientX + offsetX) + "px";
+			ui.style.top = (e.clientY + offsetY) + "px";
+			ui.style.right = "auto"; // disable right anchor so dragging works
+		});
+
+		// Model selector
+		const modelLabel = document.createElement("label");
+		modelLabel.textContent = "Model: ";
+		modelLabel.style.marginRight = "2px";
+
+		const modelSelect = document.createElement("select");
+		modelSelect.style.marginBottom = "2px";
+
+		const opt1 = document.createElement("option");
+		opt1.value = "Model_2";
+		opt1.textContent = "Model_2";
+
+		const opt2 = document.createElement("option");
+		opt2.value = "Model_6b";
+		opt2.textContent = "Model_6b";
+
+		modelSelect.appendChild(opt1);
+		modelSelect.appendChild(opt2);
+
+		const selectorContainer = document.createElement("div");
+		selectorContainer.style.marginBottom = "12px";
+		selectorContainer.appendChild(modelLabel);
+		selectorContainer.appendChild(modelSelect);
+
+		selectorContainer.style.fontSize = "16px";
+		modelLabel.style.fontWeight = "bold";
+		modelSelect.style.fontSize = "16px";
+		modelSelect.style.padding = "4px";
+		modelSelect.style.borderRadius = "4px";
+		modelSelect.style.border = "1px solid #aaa";
+
+		ui.appendChild(selectorContainer);
+
+        // Predict button
+        const btn = document.createElement("button");
+        btn.textContent = "Predict STG";
+        btn.style.padding = "8px 16px";
+        btn.style.fontSize = "16px";
+        ui.appendChild(btn);
+
+        // Output area
+        const out = document.createElement("div");
+        out.id = "prediction";
+        out.style.marginTop = "10px";
+        out.style.fontSize = "16px";
+        ui.appendChild(out);
+
+        // Insert UI into the Ketcher root container
+        document.getElementById("root").appendChild(ui);
+
+        // Button handler
+        btn.onclick = async () => {
+            try {
+                const smiles = await ketcher.getSmiles();
+                console.log("SMILES:", smiles);
+                predict(smiles, modelSelect.value);
+            } catch (err) {
+                console.error(err);
+                out.textContent = "Error extracting SMILES";
+            }
+        };
+    }
+
+    async function predict(smiles, model) {
+        try {
+            const response = await fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ smiles: smiles, model: model })
+            });
+
+            const result = await response.json();
+			if (!response.ok) {
+				document.getElementById("prediction").textContent = result.detail;
+				return;
+			}
+            document.getElementById("prediction").textContent =
+                "Prediction: " + result.prediction;
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById("prediction").textContent =
+                "Error contacting backend";
+        }
+    }
+
+    initPredictor();
+</script>
+
+</body></html>

@@ -1,0 +1,17 @@
+
+# volumes:
+#   hf_cache:
+ 
+services:
+  server:
+    build:
+      context: .
+    image: ketcher-predict:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - HF_HOME=/home/appuser/.cache/huggingface # tell Hugging Face where inside the container to put its cache
+    volumes:
+      - .:/app
+#      - ./hf_cache:/home/appuser/.cache/huggingface # if there is cache on local machine use it
+
