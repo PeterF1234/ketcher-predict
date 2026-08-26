@@ -1,4 +1,4 @@
-# ketcher-predict
+# ketcher-predict [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 A modified Ketcher molecular editor with custom ML backend for molecular property prediction. Currently, the backend predicts the singlet-triplet gap (STG).
 
@@ -15,4 +15,4 @@ Environment files for Conda are also included:
 - `hybrid_model.yml` is the same env but for PCs with GPU
 - `hybrid_model_script.yml` is the env we used for production runs (HPO, CV) on a Linux workstation
 
-The saved model weights are stored in the [STG prediction zenodo archive](https://doi.org/10.5281/zenodo.22111316).
+The saved model weights are stored in the Zenodo repository: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22111316.svg)](https://doi.org/10.5281/zenodo.22111316)
