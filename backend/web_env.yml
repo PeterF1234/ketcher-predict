@@ -1,0 +1,13 @@
+name: web_env
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+  - fastapi
+  - pydantic 
+  - rdkit
+  - pytorch
+  - pytorch_geometric
+  - transformers
+  - tokenizers
