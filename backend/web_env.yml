@@ -11,3 +11,5 @@ dependencies:
   - pytorch_geometric
   - transformers
   - tokenizers
+  - pandas
+  - numpy

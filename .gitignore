@@ -1,0 +1,62 @@
+
+# Python cache and build files
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+qwe.py
+versions.txt
+
+# Jupyter and IPython
+.ipynb_checkpoints/
+
+# Machine learning artifacts
+models/
+checkpoints/
+*.ckpt
+*.h5
+*.pkl
+*.pickle
+*.pt
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and workspace files
+.vscode/
+.idea/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+.history/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Docker build files
+docker-compose.override.yml

@@ -101,6 +101,23 @@
         out.style.fontSize = "16px";
         ui.appendChild(out);
 
+        const conf = document.createElement("div");
+        conf.id = "confidence";
+        ui.appendChild(conf);
+
+        const sim = document.createElement("div");
+        sim.id = "similarity";
+        ui.appendChild(sim);
+
+        // Clear prediction output when Ketcher canvas is cleared
+        ketcher.editor.subscribe("change", async () => {
+            const smiles = await ketcher.getSmiles();
+
+            if (!smiles.trim()) {
+                out.innerHTML = "";
+            }
+        });
+
         // Insert UI into the Ketcher root container
         document.getElementById("root").appendChild(ui);
 
@@ -132,6 +149,57 @@
 			}
             document.getElementById("prediction").textContent =
                 "Prediction: " + result.prediction;
+            
+            const ad =
+                result.max_similarity >= 0.80 ? "🟢 High confidence" :
+                result.max_similarity >= 0.60 ? "🟡 Moderate confidence" :
+                "🔴 Low confidence";
+
+            document.getElementById("prediction").innerHTML = `
+                <div style="
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    padding: 12px;
+                    background: #fafafa;
+                    line-height: 1.6;
+                ">
+                    <div style="font-size: 13px; color: #666;">
+                        Predicted Property
+                    </div>
+
+                    <div style="
+                        font-size: 26px;
+                        font-weight: bold;
+                        color: #1f77b4;
+                        margin-bottom: 10px;
+                    ">
+                        ${result.prediction}
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid #ddd;">
+
+                    <div>
+                        <b>Applicability Domain:</b><br>
+                        ${ad}
+                    </div>
+
+                    <div style="margin-top:8px;">
+                        <b>Max Similarity:</b>
+                        ${result.max_similarity}
+                    </div>
+                    <div style="margin-top:4px;">
+                        <b>Mean Top-5 Similarity:</b>
+                        ${result.top5_mean_similarity}
+                    </div>
+                </div>
+            `;
+
+
+            // document.getElementById("confidence").textContent = ad;
+            // document.getElementById("similarity").textContent =
+            //     "Mean top-5 Similarity: " + result.top5_mean_similarity;
+            // document.getElementById("similarity").textContent =
+            //     "Max Similarity: " + result.max_similarity;
 
         } catch (err) {
             console.error(err);

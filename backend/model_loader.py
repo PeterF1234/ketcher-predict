@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from rdkit import Chem
+from rdkit.Chem import AllChem, DataStructs
+from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -17,9 +19,12 @@ from torch_geometric.utils import get_laplacian, to_dense_adj
 from pathlib import Path
 from torch_geometric.data import Batch
 from fastapi.responses import FileResponse
+import pandas as pd
+import numpy as np
 
 # Make the paths relative to the Python file, not the shell location.
 BASE_DIR = Path(__file__).resolve().parent
+DATA_FILE = BASE_DIR / "AAG_numbers_smiles.csv"
 PARAM_FILE_A = BASE_DIR / "Model6b_optparams.json"
 WEIGHTS_FILE_A = BASE_DIR / "model6b_trial_8.pt"
 PARAM_FILE_B = BASE_DIR / "Model2_optparams.json"
@@ -32,10 +37,20 @@ print(f"running on {device}")
 # Global placeholders
 tokenizer = None
 model = None
+fps_db = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global tokenizer, model_6b, model_2
+    global tokenizer, model_6b, model_2, fps_db
+
+    #-------------------------
+    # Precompute Morgan fingerprints for the database SMILES
+    #-------------------------
+
+    aag_smiles = pd.read_csv(DATA_FILE)
+    fps_db = precompute_fingerprints(aag_smiles, smiles_col="SMILES")
+
+    print("Morgan fingerprints precomputed for the database SMILES.")
 
     #-------------------------
     # Model_6b
@@ -105,6 +120,7 @@ async def lifespan(app: FastAPI):
     del model_6b
     del model_2
     del tokenizer
+    del fps_db
 
 app = FastAPI(lifespan=lifespan)
 # app = FastAPI()
@@ -547,6 +563,11 @@ class AttentiveGraphRegressor(nn.Module):
     def forward(self, data):
         return self.model(data.x, data.edge_index, data.edge_attr, data.batch).view(-1)
 
+# -------------------------
+#
+# RDKit Utilities
+#
+# -------------------------
 
 def canonicalize(smiles: str) -> str:
     mol = Chem.MolFromSmiles(smiles)
@@ -558,6 +579,35 @@ def canonicalize(smiles: str) -> str:
     if any(atom.GetAtomicNum() == 0 for atom in mol.GetAtoms()):
         raise ValueError("R groups are not supported!")
     return Chem.MolToSmiles(mol, canonical=True)
+
+def precompute_fingerprints(df, smiles_col="SMILES"):
+    """
+    Precompute Morgan fingerprints for all SMILES in df[smiles_col].
+    Returns a dictionary mapping index to fingerprint.
+    """
+    gen = GetMorganGenerator(radius=2, fpSize=2048)
+    fingerprints = {}
+
+    for idx, smi in df[smiles_col].items():
+        mol = Chem.MolFromSmiles(smi)
+        if mol is None:
+            fingerprints[idx] = None
+            continue
+        fp = gen.GetFingerprint(mol)
+        fingerprints[idx] = fp
+
+    return fingerprints
+
+def get_query_fp(input_smiles_):
+    """
+    Compute the Morgan fingerprint for a single input SMILES.
+    Returns the fingerprint object.
+    """
+    input_smiles = canonicalize(input_smiles_)
+    mol_query = Chem.MolFromSmiles(input_smiles)
+    gen = GetMorganGenerator(radius=2, fpSize=2048)
+    fp_query = gen.GetFingerprint(mol_query)
+    return fp_query
 
 # def get_predval(smiles, model, device="cpu"): # single smiles prediction
 #     model.eval()
@@ -598,6 +648,16 @@ def get_prediction(req: MolRequest):
         smiles = canonicalize(req.smiles)
     except ValueError as e:
         return {"prediction": str(e)}
+    # test similarity with the database
+    fp_query = get_query_fp(req.smiles)
+    sims = np.array(DataStructs.BulkTanimotoSimilarity(fp_query, list(fps_db.values())))
+    top_idx = np.argpartition(sims, -5)[-5:] # fastest 5 indices without sorting the entire array
+    top_idx = top_idx[np.argsort(np.array(sims)[top_idx])[::-1]]
+    max_sim = sims[top_idx[0]]
+    print(f"Max similarity with database: {max_sim:.4f}")
+    top5_mean = sims[top_idx].mean()
+    print(f"Top 5 mean similarity with database: {top5_mean:.4f}")
+    # get model 6b prediction
     if req.model == "Model_6b":
         chem_input = tokenizer(
             [smiles],
@@ -614,7 +674,8 @@ def get_prediction(req: MolRequest):
         prediction = round(prediction.item(), 3)
         prediction = f"{prediction} eV"
         print(f"prediction: {prediction}")
-        return {"prediction": prediction}
+        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean, 2), "max_similarity": round(max_sim, 2)}
+    # get model 2 prediction
     elif req.model == "Model_2":
         dta = smiles_to_graph(smiles).to(device)
         with torch.no_grad():
@@ -624,7 +685,7 @@ def get_prediction(req: MolRequest):
         prediction = round(prediction.item(), 3)
         prediction = f"{prediction} eV"
         print(f"prediction: {prediction}")
-        return {"prediction": prediction}
+        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean, 2), "max_similarity": round(max_sim, 2)}
     else:
         raise HTTPException(400, detail="Model selection invalid!")
 
