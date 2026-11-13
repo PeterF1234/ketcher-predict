@@ -23,15 +23,15 @@ Environment files for Conda are also included:
 - `hybrid_model.yml` is the same env but for PCs with GPU
 - `hybrid_model_script.yml` is the env we used for production runs (HPO, CV) on a Linux workstation
 
-The saved model weights are stored in the Zenodo repository: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22111316.svg)](https://doi.org/10.5281/zenodo.22111316)
+The saved model weights are stored in the Zenodo repository: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22111315.svg)](https://doi.org/10.5281/zenodo.22111315)
 
 ## Running the App Locally
 
 Running the application on a local PC is relatively simple and works under both Windows and Linux:
 1) install Docker
 2) clone/download the repository
-3) get the saved model weights from [Zenodo](https://doi.org/10.5281/zenodo.22111316)
-4) put `model2_trial_2.pt` and `model6b_trial_8.pt` in the backend folder
+3) get the saved model weights (`revised_weights.zip`) from [Zenodo](https://doi.org/10.5281/zenodo.22111315)
+4) put the extracted model files `model2_trial_12.pt`, `model6b_trial_40.pt` and `model2_full_dataset.pt` in the backend folder
 5) use a terminal to navigate to the downloaded folder
 6) use `docker compose build` to build a docker image
 7) then `docker compose up` to start a container
