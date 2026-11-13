@@ -60,3 +60,4 @@ desktop.ini
 
 # Docker build files
 docker-compose.override.yml
+*.tar

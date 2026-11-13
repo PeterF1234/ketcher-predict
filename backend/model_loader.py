@@ -25,10 +25,12 @@ import numpy as np
 # Make the paths relative to the Python file, not the shell location.
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "AAG_numbers_smiles.csv"
+DATA_FILE_2 = BASE_DIR / "full_db_extension_only.csv"
 PARAM_FILE_A = BASE_DIR / "Model6b_optparams.json"
-WEIGHTS_FILE_A = BASE_DIR / "model6b_trial_8.pt"
+WEIGHTS_FILE_A = BASE_DIR / "model6b_trial_40.pt"
 PARAM_FILE_B = BASE_DIR / "Model2_optparams.json"
-WEIGHTS_FILE_B = BASE_DIR / "model2_trial_2.pt"
+WEIGHTS_FILE_B = BASE_DIR / "model2_trial_12.pt"
+WEIGHTS_FILE_C = BASE_DIR / "model2_full_dataset.pt"
 HTML_PATH = BASE_DIR.parent
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -41,19 +43,21 @@ fps_db = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global tokenizer, model_6b, model_2, fps_db
+    global tokenizer, model_6b, model_2, model_2_full, fps_db, fps_db_ext
 
     #-------------------------
     # Precompute Morgan fingerprints for the database SMILES
     #-------------------------
 
     aag_smiles = pd.read_csv(DATA_FILE)
+    ext_smiles = pd.read_csv(DATA_FILE_2)
     fps_db = precompute_fingerprints(aag_smiles, smiles_col="SMILES")
+    fps_db_ext = precompute_fingerprints(ext_smiles, smiles_col="SMILES")
 
     print("Morgan fingerprints precomputed for the database SMILES.")
 
     #-------------------------
-    # Model_6b
+    # Model_6b demo
     #-------------------------
 
     with open(PARAM_FILE_A, "r") as f:
@@ -85,10 +89,10 @@ async def lifespan(app: FastAPI):
     model_6b.load_state_dict(torch.load(WEIGHTS_FILE_A, map_location=device))
     model_6b.eval()
 
-    print("Model_6b loaded.")
+    print("Model_6b demo loaded.")
 
     #-------------------------
-    # Model_2
+    # Model_2 demo
     #-------------------------
 
     with open(PARAM_FILE_B, "r") as f:
@@ -111,7 +115,33 @@ async def lifespan(app: FastAPI):
     model_2.load_state_dict(torch.load(WEIGHTS_FILE_B, map_location=device))
     model_2.eval()
 
-    print("Model_2 loaded.")
+    print("Model_2 demo loaded.")
+
+    #-------------------------
+    # Model_2 full
+    #-------------------------
+
+    with open(PARAM_FILE_B, "r") as f:
+        optparams_ = json.load(f)
+
+    hidden_channels = optparams_['hidden_channels']
+    num_layers = optparams_['num_layers']
+    num_timesteps = optparams_['num_timesteps']
+    dropout = optparams_['dropout']
+    # these two are fixed through the smiles_to_graph() function
+    node_feat_dim = 10 # data.x.shape[1]
+    edge_feat_dim = 8  # data.edge_attr.shape[1]
+
+    model_2_full = AttentiveGraphRegressor(node_feat_dim=node_feat_dim,
+                                           edge_feat_dim=edge_feat_dim,
+                                           hidden_channels=hidden_channels,
+                                           num_layers=num_layers,
+                                           num_timesteps=num_timesteps,
+                                           dropout=dropout).to(device)
+    model_2_full.load_state_dict(torch.load(WEIGHTS_FILE_C, map_location=device))
+    model_2_full.eval()
+
+    print("Model_2 full loaded.")
 
     yield  # <-- FastAPI starts serving here
 
@@ -119,8 +149,10 @@ async def lifespan(app: FastAPI):
     print("Shutting down…")
     del model_6b
     del model_2
+    del model_2_full
     del tokenizer
     del fps_db
+    del fps_db_ext
 
 app = FastAPI(lifespan=lifespan)
 # app = FastAPI()
@@ -648,7 +680,7 @@ def get_prediction(req: MolRequest):
         smiles = canonicalize(req.smiles)
     except ValueError as e:
         return {"prediction": str(e)}
-    # test similarity with the database
+    # compute similarity with the INVEST database
     fp_query = get_query_fp(req.smiles)
     sims = np.array(DataStructs.BulkTanimotoSimilarity(fp_query, list(fps_db.values())))
     top_idx = np.argpartition(sims, -5)[-5:] # fastest 5 indices without sorting the entire array
@@ -657,7 +689,16 @@ def get_prediction(req: MolRequest):
     print(f"Max similarity with database: {max_sim:.4f}")
     top5_mean = sims[top_idx].mean()
     print(f"Top 5 mean similarity with database: {top5_mean:.4f}")
-    # get model 6b prediction
+    # compute similarity with the extended database
+    sims_ext = np.array(DataStructs.BulkTanimotoSimilarity(fp_query, list(fps_db_ext.values())))
+    sims_ext = np.concatenate((sims, sims_ext))
+    top_idx_ext = np.argpartition(sims_ext, -5)[-5:] # fastest 5 indices without sorting the entire array
+    top_idx_ext = top_idx_ext[np.argsort(np.array(sims_ext)[top_idx_ext])[::-1]]
+    max_sim_ext = sims_ext[top_idx_ext[0]]
+    print(f"Max similarity with extended database: {max_sim_ext:.4f}")
+    top5_mean_ext = sims_ext[top_idx_ext].mean()
+    print(f"Top 5 mean similarity with extended database: {top5_mean_ext:.4f}")
+    # get model 6b demo prediction
     if req.model == "Model_6b":
         chem_input = tokenizer(
             [smiles],
@@ -686,6 +727,17 @@ def get_prediction(req: MolRequest):
         prediction = f"{prediction} eV"
         print(f"prediction: {prediction}")
         return {"prediction": prediction, "top5_mean_similarity": round(top5_mean, 2), "max_similarity": round(max_sim, 2)}
+    # get model 2 full dataset prediction
+    elif req.model == "Model_2_full": 
+        dta = smiles_to_graph(smiles).to(device)
+        with torch.no_grad():
+            batch = Batch.from_data_list([dta])
+            pred = model_2_full(batch)
+        prediction = pred.detach().cpu().numpy()
+        prediction = round(prediction.item(), 3)
+        prediction = f"{prediction} eV"
+        print(f"prediction: {prediction}")
+        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean_ext, 2), "max_similarity": round(max_sim_ext, 2)}
     else:
         raise HTTPException(400, detail="Model selection invalid!")
 
