@@ -37,9 +37,14 @@ Running the application on a local PC is relatively simple and works under both 
 7) then `docker compose up` to start a container
 8) open http://localhost:8000/ in a browser
 
+## Some Technical Details
+
+- the prediction box can be dragged using the mouse
+- [documentation for using the ketcher interface](https://github.com/epam/ketcher/blob/master/documentation/help.md)
+
 ## Todo
 
 We plan to keep improving the web server by updating Ketcher and adding new molecular properties to predict. We plan to stay at Ketcher version v2, since v3 added a macromolecules feature that the backend is not designed to utilize.
 
 Present taks:
-- The models provide predictions for molecules with other than C,N,H atoms. The applicability domain feature somewhat accounts for this, but an error/warning message for "unknown" elements might be necessary. 
+- Work on the scaling of the elements inside the prediction box. Improve behavior when resizing the browser window or dragging the box to the right edge of the screen. 
