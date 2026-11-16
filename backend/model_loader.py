@@ -641,6 +641,25 @@ def get_query_fp(input_smiles_):
     fp_query = gen.GetFingerprint(mol_query)
     return fp_query
 
+def contains_other_atoms(smiles):
+    """
+    Checks whether a SMILES molecule contains atoms other than C, N, and H.
+
+    Returns:
+        True  : If other elements are present.
+        False : If the molecule contains only C, N, and H.
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError("Invalid SMILES input")
+
+    allowed_atoms = {"C", "N", "H"}
+    for atom in mol.GetAtoms():
+        if atom.GetSymbol() not in allowed_atoms:
+            return True
+
+    return False
+
 # def get_predval(smiles, model, device="cpu"): # single smiles prediction
 #     model.eval()
 #     smiles = canonicalize(smiles)
@@ -698,6 +717,10 @@ def get_prediction(req: MolRequest):
     print(f"Max similarity with extended database: {max_sim_ext:.4f}")
     top5_mean_ext = sims_ext[top_idx_ext].mean()
     print(f"Top 5 mean similarity with extended database: {top5_mean_ext:.4f}")
+    # detect if the molecule contains atoms other than C, N, and H
+    coa = contains_other_atoms(smiles)
+    if coa:
+        print("Warning: The molecule contains atoms other than C, N, and H. Predictions may be unreliable.")
     # get model 6b demo prediction
     if req.model == "Model_6b":
         chem_input = tokenizer(
@@ -715,7 +738,7 @@ def get_prediction(req: MolRequest):
         prediction = round(prediction.item(), 3)
         prediction = f"{prediction} eV"
         print(f"prediction: {prediction}")
-        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean, 2), "max_similarity": round(max_sim, 2)}
+        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean, 2), "max_similarity": round(max_sim, 2), "contains_other_atoms": coa}
     # get model 2 prediction
     elif req.model == "Model_2":
         dta = smiles_to_graph(smiles).to(device)
@@ -726,7 +749,7 @@ def get_prediction(req: MolRequest):
         prediction = round(prediction.item(), 3)
         prediction = f"{prediction} eV"
         print(f"prediction: {prediction}")
-        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean, 2), "max_similarity": round(max_sim, 2)}
+        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean, 2), "max_similarity": round(max_sim, 2), "contains_other_atoms": coa}
     # get model 2 full dataset prediction
     elif req.model == "Model_2_full": 
         dta = smiles_to_graph(smiles).to(device)
@@ -737,7 +760,7 @@ def get_prediction(req: MolRequest):
         prediction = round(prediction.item(), 3)
         prediction = f"{prediction} eV"
         print(f"prediction: {prediction}")
-        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean_ext, 2), "max_similarity": round(max_sim_ext, 2)}
+        return {"prediction": prediction, "top5_mean_similarity": round(top5_mean_ext, 2), "max_similarity": round(max_sim_ext, 2), "contains_other_atoms": coa}
     else:
         raise HTTPException(400, detail="Model selection invalid!")
 

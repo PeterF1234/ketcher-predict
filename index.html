@@ -156,6 +156,7 @@
                 "Prediction: " + result.prediction;
             
             const ad =
+                result.contains_other_atoms ? "🔴 Low confidence" :
                 result.max_similarity >= 0.80 ? "🟢 High confidence" :
                 result.max_similarity >= 0.60 ? "🟡 Moderate confidence" :
                 "🔴 Low confidence";
@@ -187,6 +188,23 @@
                         <b>Applicability Domain:</b><br>
                         ${ad}
                     </div>
+
+                    ${result.contains_other_atoms ? `
+                        <div style="
+                            margin-top: 10px;
+                            padding: 10px;
+                            border: 1px solid #e0a000;
+                            border-radius: 6px;
+                            background: #fff3cd;
+                            color: #856404;
+                            font-size: 13px;
+                        ">
+                            ⚠️ <b>Warning:</b> The input molecule contains atoms other than
+                            carbon (C), nitrogen (N), and hydrogen (H).<br>
+                            The prediction may be less reliable because these atoms
+                            are outside the supported chemical domain.
+                        </div>
+                    ` : ""}
 
                     <div style="margin-top:8px;">
                         <b>Max Similarity:</b>
