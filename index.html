@@ -25,7 +25,8 @@
         const ui = document.createElement("div");
         ui.style.position = "absolute";
         ui.style.top = "75px";
-        ui.style.right = "60px";
+        // ui.style.right = "60px";
+        ui.style.left = "60px";
         ui.style.zIndex = "9999";
         ui.style.background = "white";
         ui.style.padding = "10px";
@@ -47,12 +48,39 @@
 			isDown = false;
 		});
 
-		document.addEventListener("mousemove", (e) => {
-			if (!isDown) return;
-			ui.style.left = (e.clientX + offsetX) + "px";
-			ui.style.top = (e.clientY + offsetY) + "px";
-			ui.style.right = "auto"; // disable right anchor so dragging works
-		});
+		// document.addEventListener("mousemove", (e) => {
+		// 	if (!isDown) return;
+		// 	ui.style.left = (e.clientX + offsetX) + "px";
+		// 	ui.style.top = (e.clientY + offsetY) + "px";
+		// 	ui.style.right = "auto"; // disable right anchor so dragging works
+		// });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!isDown) return;
+
+            const maxX = window.innerWidth - ui.offsetWidth;
+            const maxY = window.innerHeight - ui.offsetHeight;
+
+            let newX = e.clientX + offsetX;
+            let newY = e.clientY + offsetY;
+
+            // Keep UI inside browser window
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            ui.style.left = newX + "px";
+            ui.style.top = newY + "px";
+            ui.style.right = "auto";
+        });
+
+        // Keep UI inside window when resizing
+        window.addEventListener("resize", () => {
+            const maxX = window.innerWidth - ui.offsetWidth;
+            const maxY = window.innerHeight - ui.offsetHeight;
+
+            ui.style.left = Math.max(0, Math.min(ui.offsetLeft, maxX)) + "px";
+            ui.style.top = Math.max(0, Math.min(ui.offsetTop, maxY)) + "px";
+        });
 
 		// Model selector
 		const modelLabel = document.createElement("label");
@@ -192,6 +220,8 @@
                     ${result.contains_other_atoms ? `
                         <div style="
                             margin-top: 10px;
+                            width: 250px;
+                            box-sizing: border-box;
                             padding: 10px;
                             border: 1px solid #e0a000;
                             border-radius: 6px;
@@ -200,7 +230,7 @@
                             font-size: 13px;
                         ">
                             ⚠️ <b>Warning:</b> The input molecule contains atoms other than
-                            carbon (C), nitrogen (N), and hydrogen (H).<br>
+                            C, N, and H.<br>
                             The prediction may be less reliable because these atoms
                             are outside the supported chemical domain.
                         </div>
