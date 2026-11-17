@@ -1,9 +1,9 @@
 {
-  "batch_size": 64,
-  "hidden_channels": 384,
-  "num_layers": 4,
-  "num_timesteps": 2,
+  "batch_size": 16,
+  "hidden_channels": 1024,
+  "num_layers": 7,
+  "num_timesteps": 6,
   "dropout": 0.0,
-  "lr": 0.0002309837412562226,
-  "weight_decay": 0.00029659622749499473
+  "lr": 3.304828363228733e-05,
+  "weight_decay": 8.085165479790358e-05
 }

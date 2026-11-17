@@ -1,2 +1,3 @@
-model2_trial_2.pt
-model6b_trial_8.pt
+model2_trial_12.pt
+model6b_trial_40.pt
+model2_full_dataset.pt
